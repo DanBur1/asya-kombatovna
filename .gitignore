@@ -1,0 +1,19 @@
+# UE5
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vscode/
+*.opensdf
+*.sdf
+*.suo
+*.xcodeproj
+*.xcworkspace
+*.idea/
+*.vs/
+.vs/
+.vscode/
+Build/
+*.log
+*.vsconfig
+AsyaKombatovna/
