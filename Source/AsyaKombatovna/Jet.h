@@ -42,16 +42,16 @@ public:
   // Ammount of carry points
   const int MaxMissiles = 12;
   // How much lift can plane accumulate
-  const float max_lift = 5000;
+  const float max_lift = 10000.f;
   // How much thrust can plane create
-  const float max_thrust = 50.f;
+  const float max_thrust = 20000.f;
   // Max speed approximately - 2500 kph / 3600 * 100 000 / 4.4
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "JetMovement")
   float max_speed = 15782;
   // How much torque has to be applied to simulate control surfaces turining
-  const float PitchTorque = 40.f;
-  const float RollTorque = 80.f;
-  const float YawTorque = 20.f;
+  const float PitchTorque = 40000000.f;
+  const float RollTorque = 80000000.f;
+  const float YawTorque = 20000000.f;
   // How much throttle changes at a time
   const float throttle_lerp=0.01;
   // Hypothetical area that generates lift in meters
@@ -109,7 +109,7 @@ public:
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
   TArray<AMissile *> Missiles;
   // Actual pitch of the aircraft
-  float pitch;
+  float plane_pitch;
   // Component responsible for plane's targetting
   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
   URadarComponent *Radar;
@@ -168,15 +168,21 @@ public:
              UPrimitiveComponent *OtherComp, FVector NormalImpulse,
              const FHitResult &Hit);
   // Turns the plane up and down
-  void Pitch(float Value);
+  void pitch(float Value);
   // Respawns missiles and resets ammo count to max
   void reload(UWorld *World);
   // Rotates the plane left and right
-  void Roll(float Value);
+  void roll(float Value);
   // Starts the timer which calls the fire function
   void startFiring();
   // Stops the timer which calls the fire function
   void stopFiring();
+  // Resets pitch value for plane animation
+  void stopPitching();
+  // Resets roll value for plane animation
+  void stopRolling();
+  // Resets yaw value for plane animation
+  void stopTurning();
   //Useless
   virtual void SetupPlayerInputComponent(
       class UInputComponent *PlayerInputComponent) override;
@@ -189,5 +195,5 @@ public:
   // Changes landing mode
   void toggleLanding();
   // Turns the plane left and right
-  void Yaw(float Value);
+  void yaw(float Value);
 };

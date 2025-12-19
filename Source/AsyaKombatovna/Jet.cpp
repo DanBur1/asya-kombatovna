@@ -121,13 +121,13 @@ void AJet::BeginPlay()
 }
 
 void AJet::CalculateAOA() {
-  pitch = JetMesh->GetComponentRotation().Pitch;
+  plane_pitch = JetMesh->GetComponentRotation().Pitch;
   float dot = FVector::DotProduct(VectorOfAttack, FVector(VectorOfAttack.X, VectorOfAttack.Y, 0));
   float degrees;
-  if (pitch == 0)
+  if (plane_pitch == 0)
     degrees = 0;
-  else degrees = pitch / abs(pitch) * FMath::RadiansToDegrees(FMath::Acos(dot));
-  if (pitch >= 0) {
+  else degrees = plane_pitch / abs(plane_pitch) * FMath::RadiansToDegrees(FMath::Acos(dot));
+  if (plane_pitch >= 0) {
     angle_of_attack = degrees;
   } else
     angle_of_attack = -degrees;
@@ -187,7 +187,7 @@ FVector AJet::generateLift(float DeltaTime) {
   lift_force = LiftEfficiency->GetFloatValue(angle_of_attack) *
                AirDensity->GetFloatValue(altitude) * air_speed * air_speed *
                wing_area / 2.f;
-  lift_force = lift_force * DeltaTime;
+  lift_force =  FMath::Clamp(lift_force * DeltaTime, 0, max_lift);
   
   return FVector(0.f, 0.f, 1.f)
   *lift_force;
@@ -232,11 +232,12 @@ void AJet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
   DamageSystem->changeHealth(air_speed*0.03);
 }
 
-void AJet::Pitch(float Value) {
+void AJet::pitch(float Value) {
+  pitch_value = Value;
   if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
-    UE_LOG(LogTemp, Warning, TEXT("Catching not pitching %f"), Value);
+    UE_LOG(LogTemp, Warning, TEXT("Catching not pitching %f"), pitch_value);
     FVector TorqueAxis = JetMesh->GetRightVector();
-    FVector Torque = TorqueAxis * Value * PitchTorque;
+    FVector Torque = TorqueAxis * pitch_value * PitchTorque;
     JetMesh->AddTorqueInRadians(Torque);
   }
 }
@@ -276,11 +277,12 @@ void AJet::reload(UWorld *World) {
   }
 }
 
-void AJet::Roll(float Value) {
+void AJet::roll(float Value) {
+  roll_value = Value;
   if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
-    UE_LOG(LogTemp, Warning, TEXT("Rollin n scratchin %f"), Value);
+    UE_LOG(LogTemp, Warning, TEXT("Rollin n scratchin %f"), roll_value);
     FVector TorqueAxis = JetMesh->GetForwardVector();
-    FVector Torque = TorqueAxis * Value * RollTorque;
+    FVector Torque = TorqueAxis * roll_value * RollTorque;
     JetMesh->AddTorqueInRadians(Torque);
   }
 }
@@ -297,6 +299,13 @@ void AJet::stopFiring() {
     GetWorld()->GetTimerManager().ClearTimer(GunTimer);
   }
 }
+
+
+void AJet::stopPitching(){ pitch_value = 0.f;}
+
+void AJet::stopRolling(){ roll_value = 0.f;}
+
+void AJet::stopTurning() { yaw_value = 0.f; }
 
 float AJet::TakeDamage(float DamageAmount, FDamageEvent const &DamageEvent,
                          AController *EventInstigator, AActor *DamageCauser) {
@@ -342,7 +351,7 @@ void AJet::Tick(float DeltaTime)
   // Applies force using thrust produced by the jet
   JetMesh->AddForce(getThrustVector(GetThrust(), DeltaTime));
   JetMesh->AddForce(generateLift(DeltaTime));
-  //JetMesh->AddForce(DragForce);
+  JetMesh->AddForce(DragForce);
 }
 
 void AJet::toggleLanding() {
@@ -353,11 +362,12 @@ void AJet::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent) {
 
 }
 
-void AJet::Yaw(float Value) {
-  UE_LOG(LogTemp, Warning, TEXT("Yawing %f"), Value);
+void AJet::yaw(float Value) {
+  yaw_value = Value;
+  UE_LOG(LogTemp, Warning, TEXT("Yawing %f"), yaw_value);
   if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
     FVector TorqueAxis = JetMesh->GetUpVector();
-    FVector Torque = TorqueAxis * Value * YawTorque;
+    FVector Torque = TorqueAxis * yaw_value * YawTorque;
     JetMesh->AddTorqueInRadians(Torque);
   }
   //yaw_value = Value;

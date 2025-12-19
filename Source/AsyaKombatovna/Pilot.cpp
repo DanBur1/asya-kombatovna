@@ -136,10 +136,14 @@ void APilot::SetupInputComponent() {
     if (PitchAction) {
       EnhancedInputComponent->BindAction(PitchAction, ETriggerEvent::Triggered,
                                          this, &APilot::OnPitchAction);
+      EnhancedInputComponent->BindAction(PitchAction, ETriggerEvent::Completed,
+                                         this, &APilot::onPitchActionEnded);
     }
     if (RollAction) {
       EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered,
                                          this, &APilot::OnRollAction);
+      EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Completed,
+                                         this, &APilot::onRollActionEnded);
     }
     if (ThrustAction) {
       EnhancedInputComponent->BindAction(ThrustAction, ETriggerEvent::Triggered,
@@ -148,6 +152,8 @@ void APilot::SetupInputComponent() {
     if (YawAction) {
       EnhancedInputComponent->BindAction(YawAction, ETriggerEvent::Triggered,
                                          this, &APilot::OnYawAction);
+      EnhancedInputComponent->BindAction(YawAction, ETriggerEvent::Completed,
+                                         this, &APilot::onYawActionEnded);
     }
   }
 }
@@ -276,14 +282,26 @@ void APilot::OnPauseAction() {
 void APilot::OnPitchAction(const FInputActionValue& Value) {
   float pitch = Value.Get<float>();
   if (ControlledJet) {
-    ControlledJet->Pitch(pitch);
+    ControlledJet->pitch(pitch);
+  }
+}
+
+void APilot::onPitchActionEnded() {
+  if (ControlledJet) {
+    ControlledJet->stopPitching();
   }
 }
 
 void APilot::OnRollAction(const FInputActionValue &Value) {
   float roll = Value.Get<float>();
   if (ControlledJet) {
-    ControlledJet->Roll(roll);
+    ControlledJet->roll(roll);
+  }
+}
+
+void APilot::onRollActionEnded() {
+  if (ControlledJet) {
+    ControlledJet->stopRolling();
   }
 }
 
@@ -297,7 +315,13 @@ void APilot::OnThrustAction(const FInputActionValue &Value) {
 void APilot::OnYawAction(const FInputActionValue &Value) {
   float yaw = Value.Get<float>();
   if (ControlledJet) {
-    ControlledJet->Yaw(yaw);
+    ControlledJet->yaw(yaw);
+  }
+}
+
+void APilot::onYawActionEnded() {
+  if (ControlledJet) {
+    ControlledJet->stopTurning();
   }
 }
 

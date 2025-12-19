@@ -118,12 +118,18 @@ public:
   void OnPauseAction();
   // Reaction to IA_Pitch
   void OnPitchAction(const FInputActionValue &Value);
+  // Reaction to IA_Pitch completed
+  void onPitchActionEnded();
   // Reaction to IA_Roll
   void OnRollAction(const FInputActionValue &Value);
+  // Reaction to IA_Roll completed
+  void onRollActionEnded();
   // Reaction to IA_Thrust
   void OnThrustAction(const FInputActionValue &Value);
-  // Reaction to IA_Yaw
+  // Reaction to IA_Yaw triggered
   void OnYawAction(const FInputActionValue &Value);
+  // Reaction to IA_Yaw completed
+  void onYawActionEnded();
   // Bruh are you for real? a function that literally sets one bool as T that's cringe af bruh
   void startFollowingTarget();
 
