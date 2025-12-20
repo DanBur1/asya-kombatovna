@@ -82,11 +82,23 @@ AJet::AJet()
     JetR->SetRelativeRotation(FRotator(0.f, 90.f, 0.f));
     JetL->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
   }
+
+  // Movement Component
+  JetMovement =
+      CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("JetMovement"));
+  if (JetMovement) {
+    JetMovement->UpdatedComponent = RootComponent;
+    JetMovement->MaxSpeed = 5000.f;
+    JetMovement->Acceleration = 2000.f;
+    JetMovement->Deceleration = 1000.f;
+    //JetMovement->MaxPitchSpeed = 180.f;
+    //JetMovement->MaxYawSpeed = 180.f;
+    //JetMovement->MaxRollSpeed = 180.f;
+  }
   // Physics
+  JetMesh->SetSimulatePhysics(false);
 
-  JetMesh->SetSimulatePhysics(true);
-
-  JetMesh->SetEnableGravity(true);
+  JetMesh->SetEnableGravity(false);
   JetMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
   // Weapons
@@ -118,6 +130,35 @@ void AJet::BeginPlay()
   reload(GetWorld());
   JetMesh->SetAllPhysicsLinearVelocity(FVector::ZeroVector);
   JetMesh->SetAllPhysicsAngularVelocityInRadians(FVector::ZeroVector);
+}
+
+ void AJet::updateFlightData() {
+  VectorOfAttack = JetMesh->GetForwardVector();
+  CalculateAOA();
+  Velocity = GetVelocity();
+  Direction = Velocity.GetSafeNormal();
+  air_speed = Velocity.Length();
+  altitude = GetActorLocation().Z;
+}
+
+void AJet::updateFlightControl(float DeltaTime){
+  // Thrust влияет на MaxSpeed
+  JetMovement->Velocity =
+      VectorOfAttack * FMath::Lerp(1000.f, 5000.f, throttle);
+
+  // Pitch/Yaw/Roll напрямую в Movement
+  /*JetMovement->AddPitchInput(pitch_value * 2.f);
+  JetMovement->AddYawInput(yaw_value * 2.f);
+  JetMovement->AddRollInput(roll_value * 2.f);*/
+
+  // Lift влияет на вертикальную скорость
+  float LiftBoost = LiftEfficiency->GetFloatValue(angle_of_attack) *
+                    AirDensity->GetFloatValue(altitude) * air_speed;
+  JetMovement->Velocity.Z += LiftBoost * DeltaTime;
+
+  // Drag
+  float Drag = air_speed * air_speed * 0.001f;
+  JetMovement->Velocity *= FMath::Clamp(1.f - Drag * DeltaTime, 0.f, 1.f);
 }
 
 void AJet::CalculateAOA() {
@@ -234,12 +275,12 @@ void AJet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 
 void AJet::pitch(float Value) {
   pitch_value = Value;
-  if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
+  /*if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
     UE_LOG(LogTemp, Warning, TEXT("Catching not pitching %f"), pitch_value);
     FVector TorqueAxis = JetMesh->GetRightVector();
     FVector Torque = TorqueAxis * pitch_value * PitchTorque;
     JetMesh->AddTorqueInRadians(Torque);
-  }
+  }*/
 }
 
 void AJet::reload(UWorld *World) {
@@ -279,12 +320,12 @@ void AJet::reload(UWorld *World) {
 
 void AJet::roll(float Value) {
   roll_value = Value;
-  if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
+  /*if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
     UE_LOG(LogTemp, Warning, TEXT("Rollin n scratchin %f"), roll_value);
     FVector TorqueAxis = JetMesh->GetForwardVector();
     FVector Torque = TorqueAxis * roll_value * RollTorque;
     JetMesh->AddTorqueInRadians(Torque);
-  }
+  }*/
 }
 
 void AJet::startFiring() {
@@ -339,19 +380,9 @@ void AJet::Tick(float DeltaTime)
   Radar->scan();
 
   // Gets all variables needed to calculate thrust
-  VectorOfAttack = JetMesh->GetForwardVector();
-  CalculateAOA();
-  Velocity = GetVelocity();
-  Direction = Velocity.GetSafeNormal();
-  air_speed = Velocity.Length();
-  altitude = GetActorLocation().Z;
-  FVector DragForce =
-      -Velocity.GetSafeNormal() * air_speed * air_speed * DeltaTime;
+  updateFlightData();
 
-  // Applies force using thrust produced by the jet
-  JetMesh->AddForce(getThrustVector(GetThrust(), DeltaTime));
-  JetMesh->AddForce(generateLift(DeltaTime));
-  JetMesh->AddForce(DragForce);
+  updateFlightControl(DeltaTime);
 }
 
 void AJet::toggleLanding() {
@@ -364,20 +395,12 @@ void AJet::SetupPlayerInputComponent(UInputComponent *PlayerInputComponent) {
 
 void AJet::yaw(float Value) {
   yaw_value = Value;
-  UE_LOG(LogTemp, Warning, TEXT("Yawing %f"), yaw_value);
+  /*UE_LOG(LogTemp, Warning, TEXT("Yawing %f"), yaw_value);
   if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
     FVector TorqueAxis = JetMesh->GetUpVector();
     FVector Torque = TorqueAxis * yaw_value * YawTorque;
     JetMesh->AddTorqueInRadians(Torque);
-  }
-  //yaw_value = Value;
-  // if (FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
-  //  FRotator Torque =
-  //      FRotator(0, Value * YawTorque * GetWorld()->GetDeltaSeconds(),
-  //                             0); // GetActorRotation();
-  //  // Torque.Yaw = Torque.Yaw + Value * YawTorque;
-  //   AddActorLocalRotation(Torque);
-  //}
+  }*/
  
 }
 

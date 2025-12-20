@@ -10,6 +10,7 @@
 #include "DestructableComponent.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/FloatingPawnMovement.h"
 #include "Jet.generated.h"
 
 UCLASS()
@@ -27,6 +28,16 @@ protected:
   // Jet's model. Presented as a skeletal mesh to animate control surfaces
   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
   USkeletalMeshComponent *JetMesh;
+  // Movements component for the flying
+  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+  class UFloatingPawnMovement *JetMovement;
+
+  // Methods
+
+  // Updates all the variables related to plane's movement
+  void updateFlightData();
+  // Calulates the movement of the jet
+  void updateFlightControl(float DeltaTime);
 
 public:
   // Constants
